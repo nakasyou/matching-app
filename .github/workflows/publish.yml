@@ -1,0 +1,118 @@
+name: Publish Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: Select the version bump to publish
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Verify npm version for trusted publishing
+        run: |
+          NODE_VERSION="$(node --version)"
+          NPM_VERSION="$(npm --version)"
+          echo "${NODE_VERSION}"
+          echo "${NPM_VERSION}"
+          export NPM_VERSION
+          node - <<'NODE'
+          const version = process.env.NPM_VERSION ?? ''
+          const [major, minor, patch] = version.split('.').map(Number)
+          const ok =
+            major > 11 ||
+            (major === 11 && minor > 5) ||
+            (major === 11 && minor === 5 && patch >= 1)
+          if (!ok) {
+            console.error(`npm ${version || 'unknown'} is too old. Trusted publishing requires npm >= 11.5.1.`)
+            process.exit(1)
+          }
+          NODE
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Resolve next shared version from npm registry
+        env:
+          RELEASE_TYPE: ${{ inputs.release_type }}
+        run: |
+          KANOJO_VERSION="$(npm view create-kanojo version --registry=https://registry.npmjs.org 2>/dev/null || true)"
+          KARESHI_VERSION="$(npm view create-kareshi version --registry=https://registry.npmjs.org 2>/dev/null || true)"
+          export KANOJO_VERSION KARESHI_VERSION
+          node - <<'NODE' >> "$GITHUB_ENV"
+          const releaseType = process.env.RELEASE_TYPE
+          const normalize = (value) => (/^\d+\.\d+\.\d+$/.test(value ?? '') ? value : '0.0.0')
+          const compare = (left, right) => {
+            const a = left.split('.').map(Number)
+            const b = right.split('.').map(Number)
+            for (let index = 0; index < 3; index += 1) {
+              if (a[index] !== b[index]) return a[index] - b[index]
+            }
+            return 0
+          }
+          const bump = (version, type) => {
+            const [major, minor, patch] = version.split('.').map(Number)
+            if (type === 'major') return `${major + 1}.0.0`
+            if (type === 'minor') return `${major}.${minor + 1}.0`
+            return `${major}.${minor}.${patch + 1}`
+          }
+
+          const kanojo = normalize(process.env.KANOJO_VERSION?.trim())
+          const kareshi = normalize(process.env.KARESHI_VERSION?.trim())
+          const current = [kanojo, kareshi].sort(compare).at(-1) ?? '0.0.0'
+          const next = bump(current, releaseType)
+
+          console.log(`CURRENT_VERSION=${current}`)
+          console.log(`NEW_VERSION=${next}`)
+          console.log(`KANOJO_PUBLISHED_VERSION=${kanojo}`)
+          console.log(`KARESHI_PUBLISHED_VERSION=${kareshi}`)
+          NODE
+
+      - name: Show resolved version
+        run: |
+          echo "Latest published create-kanojo: ${KANOJO_PUBLISHED_VERSION}"
+          echo "Latest published create-kareshi: ${KARESHI_PUBLISHED_VERSION}"
+          echo "Selected base version: ${CURRENT_VERSION}"
+          echo "Publishing new shared version: ${NEW_VERSION}"
+
+      - name: Set package versions
+        run: |
+          npm pkg set version="${NEW_VERSION}" --prefix packages/create-kanojo
+          npm pkg set version="${NEW_VERSION}" --prefix packages/create-kareshi
+
+      - name: Build packages
+        run: bun run build
+
+      - name: Publish create-kanojo
+        run: npm publish --access public
+        working-directory: packages/create-kanojo
+
+      - name: Publish create-kareshi
+        run: npm publish --access public
+        working-directory: packages/create-kareshi

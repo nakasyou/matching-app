@@ -1,0 +1,25 @@
+{
+  "name": "matching-app",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nakasyou/matching-app.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nakasyou/matching-app/issues"
+  },
+  "homepage": "https://github.com/nakasyou/matching-app#readme",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "build": "bun run --filter create-kanojo build && bun run --filter create-kareshi build",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

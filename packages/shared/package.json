@@ -1,0 +1,23 @@
+{
+  "name": "@repo/shared",
+  "module": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.1.0",
+    "nostr-tools": "^2.23.3",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "vite-plus": "^0.1.11"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
