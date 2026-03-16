@@ -13,8 +13,11 @@
     },
     "packages/create-kanojo": {
       "name": "create-kanojo",
+      "version": "0.0.0",
+      "bin": {
+        "create-kanojo": "dist/index.mjs",
+      },
       "devDependencies": {
-        "@repo/shared": "workspace:*",
         "vite-plus": "^0.1.11",
       },
       "peerDependencies": {
@@ -23,8 +26,11 @@
     },
     "packages/create-kareshi": {
       "name": "create-kareshi",
+      "version": "0.0.0",
+      "bin": {
+        "create-kareshi": "dist/index.mjs",
+      },
       "devDependencies": {
-        "@repo/shared": "workspace:*",
         "vite-plus": "^0.1.11",
       },
       "peerDependencies": {
@@ -33,6 +39,7 @@
     },
     "packages/shared": {
       "name": "@repo/shared",
+      "version": "0.0.0",
       "dependencies": {
         "@clack/prompts": "^1.1.0",
         "nostr-tools": "^2.23.3",

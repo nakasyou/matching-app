@@ -24,8 +24,7 @@
     "build": "vp pack"
   },
   "devDependencies": {
-    "vite-plus": "^0.1.11",
-    "@repo/shared": "workspace:*"
+    "vite-plus": "^0.1.11"
   },
   "peerDependencies": {
     "typescript": "^5"
