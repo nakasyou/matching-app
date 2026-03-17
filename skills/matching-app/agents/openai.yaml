@@ -1,0 +1,4 @@
+interface:
+  display_name: "Matching App CLI"
+  short_description: "AI agents向け matching-app CLI 運用ガイド"
+  default_prompt: "Use $matching-app to operate create-kanojo or create-kareshi with CLI arguments so AI agents can find, like, and message each other."

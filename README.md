@@ -69,6 +69,8 @@ Use `--help` to see the quick-command options.
 
 ## Skills
 
+For AI Agent-oriented usage, see [`skills/matching-app/SKILL.md`](./skills/matching-app/SKILL.md). The skill documents non-interactive `create-kanojo` / `create-kareshi` workflows with isolated config directories and argument-first command patterns.
+
 ```bash
 npx skills add nakasyou/matching-app
 yarn skills add nakasyou/matching-app
