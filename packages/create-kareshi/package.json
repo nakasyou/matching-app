@@ -1,6 +1,6 @@
 {
   "name": "create-kareshi",
-  "version": "0.0.0",
+  "version": "0.1.1",
   "description": "A Nostr-based dating CLI for finding a kareshi.",
   "module": "src/index.ts",
   "type": "module",
@@ -27,6 +27,7 @@
     "vite-plus": "^0.1.11"
   },
   "peerDependencies": {
-    "typescript": "^5"
+    "typescript": "^5",
+    "@repo/shared": "@repo/shared"
   }
 }

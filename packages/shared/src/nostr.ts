@@ -37,6 +37,8 @@ import {
   type ChatEnvelope,
   type DiscoverListing,
   type LikePayload,
+  type ListingRecord,
+  type ListingStatus,
   type MatchPayload,
   type PendingMatchAck,
   type PrivatePayload,
@@ -81,6 +83,17 @@ export interface NostrService {
   ): Promise<ProfileConfig>
   refreshOwnListings(profile: ProfileConfig): Promise<ProfileConfig>
   closeListing(profile: ProfileConfig, listingId: string): Promise<ProfileConfig>
+  updateListing(
+    profile: ProfileConfig,
+    input: {
+      listingId: string
+      headline?: string
+      summary?: string
+      region?: string
+      desiredTags?: string[]
+      status?: ListingStatus
+    },
+  ): Promise<ProfileConfig>
   discoverListings(profile: ProfileConfig): Promise<DiscoverListing[]>
   syncInbox(profile: ProfileConfig): Promise<ProfileConfig>
   sendLike(
@@ -176,26 +189,44 @@ export function createNostrService(options: NostrServiceOptions = {}): NostrServ
   }
 
   async function closeListing(profile: ProfileConfig, listingId: string): Promise<ProfileConfig> {
-    const listing = profile.cache.listings.find((item) => item.id === listingId)
+    return updateListing(profile, { listingId, status: 'closed' })
+  }
+
+  async function updateListing(
+    profile: ProfileConfig,
+    input: {
+      listingId: string
+      headline?: string
+      summary?: string
+      region?: string
+      desiredTags?: string[]
+      status?: ListingStatus
+    },
+  ): Promise<ProfileConfig> {
+    const listing = profile.cache.listings.find((item) => item.id === input.listingId)
     if (!listing) {
-      throw new Error(`Listing not found: ${listingId}`)
+      throw new Error(`Listing not found: ${input.listingId}`)
     }
 
-    const closedListing = {
+    const nextListing: ListingRecord = {
       ...listing,
-      status: 'closed' as const,
+      headline: input.headline?.trim() ?? listing.headline,
+      summary: input.summary?.trim() ?? listing.summary,
+      region: input.region?.trim() ?? listing.region,
+      desiredTags: uniqueStrings(input.desiredTags ?? listing.desiredTags),
+      status: input.status ?? listing.status,
       updatedAt: now(),
     }
 
     const secretKey = decodeNsec(profile.nostr.nsec)
-    const signed = finalizeEvent(serializeMatchingListingEvent(profile, closedListing), secretKey)
+    const signed = finalizeEvent(serializeMatchingListingEvent(profile, nextListing), secretKey)
     await transport.publish(profile.relays, [signed])
 
     return {
       ...profile,
       cache: {
         ...profile.cache,
-        listings: [closedListing, ...profile.cache.listings.filter((item) => item.id !== closedListing.id)],
+        listings: [nextListing, ...profile.cache.listings.filter((item) => item.id !== nextListing.id)],
         lastListingSyncAt: now(),
       },
     }
@@ -419,6 +450,7 @@ export function createNostrService(options: NostrServiceOptions = {}): NostrServ
     publishListing,
     refreshOwnListings,
     closeListing,
+    updateListing,
     discoverListings,
     syncInbox,
     sendLike,
@@ -432,6 +464,14 @@ export function createNostrService(options: NostrServiceOptions = {}): NostrServ
 
 export function createGeneratedCredentials(): GeneratedCredentials {
   const secretKey = generateSecretKey()
+  return {
+    pubkey: getPublicKey(secretKey),
+    nsec: nip19.nsecEncode(secretKey),
+  }
+}
+
+export function importCredentials(nsec: string): GeneratedCredentials {
+  const secretKey = decodeNsec(nsec.trim())
   return {
     pubkey: getPublicKey(secretKey),
     nsec: nip19.nsecEncode(secretKey),

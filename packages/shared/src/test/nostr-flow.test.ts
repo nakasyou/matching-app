@@ -163,4 +163,54 @@ describe('nostr service flow', () => {
 
     service.close()
   })
+
+  test('updates and reopens listings while preserving the listing id', async () => {
+    const transport = createMemoryTransport()
+    const service = createNostrService({ transport })
+
+    let alice = createDefaultProfile(
+      { brand: 'create-kanojo', role: 'male', target: 'female' },
+      {
+        profileName: 'alice',
+        displayName: 'Alice',
+        bio: 'coffee',
+        region: 'Tokyo',
+        ageRange: '20s',
+        interests: ['coffee'],
+        lookingFor: { ageRange: '20s', regions: ['Tokyo'], notes: 'slow' },
+        nostr: service.createGeneratedCredentials(),
+        relays: DEFAULT_RELAYS,
+      },
+    )
+
+    await service.publishProfile(alice)
+    alice = await service.publishListing(alice, {
+      headline: 'coffee',
+      summary: 'slow coffee',
+      desiredTags: ['coffee'],
+    })
+
+    const original = alice.cache.listings[0]!
+    alice = await service.updateListing(alice, {
+      listingId: original.id,
+      headline: 'movie',
+      summary: 'movie first',
+      desiredTags: ['movie'],
+    })
+    expect(alice.cache.listings[0]?.id).toBe(original.id)
+    expect(alice.cache.listings[0]?.headline).toBe('movie')
+    expect(alice.cache.listings[0]?.status).toBe('open')
+
+    alice = await service.closeListing(alice, original.id)
+    expect(alice.cache.listings[0]?.status).toBe('closed')
+
+    alice = await service.updateListing(alice, {
+      listingId: original.id,
+      status: 'open',
+    })
+    expect(alice.cache.listings[0]?.id).toBe(original.id)
+    expect(alice.cache.listings[0]?.status).toBe('open')
+
+    service.close()
+  })
 })

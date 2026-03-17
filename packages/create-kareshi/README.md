@@ -1,13 +1,7 @@
 # create-kareshi
 
-女性ユーザー向けの CLI 入口です。実装本体は `@repo/shared` にあり、この package は以下の preset で起動します。
+Create your boyfriend with `create-kareshi`. If you want to create your girlfriend, please use `create-kanojo` instead.
 
-- `brand: create-kareshi`
-- `role: female`
-- `target: male`
+## Usage
 
-```bash
-bun packages/create-kareshi/src/index.ts
-```
-
-公開用 bundle は `bun run --filter create-kareshi build` で `dist/index.mjs` に出力されます。
+See https://github.com/nakasyou/matching-app
