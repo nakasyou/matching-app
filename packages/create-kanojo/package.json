@@ -28,6 +28,6 @@
   },
   "peerDependencies": {
     "typescript": "^5",
-    "@repo/shared": "@repo/shared"
+    "@repo/shared": "workspace:*"
   }
 }
