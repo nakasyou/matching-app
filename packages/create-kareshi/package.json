@@ -27,7 +27,6 @@
     "vite-plus": "^0.1.11"
   },
   "peerDependencies": {
-    "typescript": "^5",
-    "@repo/shared": "workspace:*"
+    "typescript": "^5"
   }
 }
